@@ -22,16 +22,18 @@ public class App
         c = new GameDisplay(field);
         Dimension d = new Dimension(WIDTH, HEIGHT);
         c.setPreferredSize(d);
+//        c.addKeyListener(field);
 
         JFrame jf = new JFrame("Asteroid Blast");
         jf.add(c, BorderLayout.CENTER);
         jf.addKeyListener(field);
 
-        JPanel jp = new JPanel();
-        jf.add(jp, BorderLayout.SOUTH);
-        for(SoundPlayer.SoundFX sfx : SoundPlayer.SoundFX.values()) {
-            addButtonTo(jp, sfx.toString(), e -> sfx.playSound());
-        }
+//        JPanel jp = new JPanel();
+//        jp.addKeyListener(field);
+//        jf.add(jp, BorderLayout.SOUTH);
+//        for(SoundPlayer.SoundFX sfx : SoundPlayer.SoundFX.values()) {
+//            addButtonTo(jp, sfx.toString(), e -> sfx.playSound());
+//        }
 
         jf.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         jf.setResizable(false);

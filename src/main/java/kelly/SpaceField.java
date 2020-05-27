@@ -105,7 +105,7 @@ public class SpaceField implements KeyListener {
     }
 
     private int levelAsteroidDelay() {
-        return 50 * 3;
+        return 50 * 8;
     }
 
     private void moveObjects() {
