@@ -2,6 +2,7 @@ package kelly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class App
 {
@@ -10,6 +11,12 @@ public class App
     private SpaceField field;
     private GameDisplay c;
 
+    private static void addButtonTo(JPanel jp, String label, ActionListener al) {
+        JButton jb = new JButton(label);
+        jp.add(jb);
+        jb.addActionListener(al);
+    }
+
     public App() {
         field = new SpaceField(WIDTH, HEIGHT);
         c = new GameDisplay(field);
@@ -17,10 +24,17 @@ public class App
         c.setPreferredSize(d);
 
         JFrame jf = new JFrame("Asteroid Blast");
-        jf.add(c);
+        jf.add(c, BorderLayout.CENTER);
         jf.addKeyListener(field);
 
+        JPanel jp = new JPanel();
+        jf.add(jp, BorderLayout.SOUTH);
+        for(SoundPlayer.SoundFX sfx : SoundPlayer.SoundFX.values()) {
+            addButtonTo(jp, sfx.toString(), e -> sfx.playSound());
+        }
+
         jf.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        jf.setResizable(false);
         jf.pack();
         jf.setVisible(true);
 

@@ -6,7 +6,7 @@ public class Bullet extends DrawableThing {
     private int expirationTime;
 
     public Bullet(int timeIndex) {
-        expirationTime = timeIndex + 200;
+        expirationTime = timeIndex + 140;
         setMass(1);
         setRadius(2);
     }

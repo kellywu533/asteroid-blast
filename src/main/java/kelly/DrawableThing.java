@@ -46,9 +46,7 @@ public abstract class DrawableThing {
     }
 
     public synchronized void setPosition(double[] position) {
-//        System.out.println("setPosition " + Arrays.toString(position) + ", " + this);
-        MatrixUtil.assignTo(this.position, position);
-//        System.out.println("setPosition " + Arrays.toString(this.position) + ", " + this);
+        this.position = position;
     }
 
     public synchronized double[] getVelocity() {
@@ -56,9 +54,7 @@ public abstract class DrawableThing {
     }
 
     public synchronized void setVelocity(double[] velocity) {
-//        System.out.println("setVelocity " + Arrays.toString(velocity) + ", " + this);
-        MatrixUtil.assignTo(this.velocity, velocity);
-//        System.out.println("setVelocity " + Arrays.toString(this.velocity) + ", " + this);
+        this.velocity = velocity;
     }
 
     public double getRadius() {

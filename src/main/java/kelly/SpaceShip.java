@@ -8,7 +8,7 @@ public class SpaceShip extends DrawableThing {
 
     public SpaceShip() {
         angle = 270;
-        scale = 20;
+        scale = 8;
         lives = 3;
     }
 

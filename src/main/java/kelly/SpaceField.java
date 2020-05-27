@@ -44,17 +44,13 @@ public class SpaceField implements KeyListener {
     }
 
     public void startClock() {
-        update();
-    }
-
-    public void update() {
         while(true) {
             timeIndex++;
+            updateKeyStatus();
             generateAsteroid();
 
             moveObjects();
             // updateShip();
-            // updateBullets();
 
             // checkShipCollision();
             // checkAsteroidCollision();
@@ -68,10 +64,15 @@ public class SpaceField implements KeyListener {
         }
     }
 
+    private int rotationDirection = 0;
+    private void updateKeyStatus() {
+        ship.rotate(rotationDirection * 5);
+    }
+
     private void generateBullet() {
         double theta = ship.getAngle() * Math.PI / 180;
         double scale = ship.getScale();
-        double speedFactor = 0.1;
+        double speedFactor = 0.4;
         double x = Math.cos(theta);
         double y = Math.sin(theta);
         Bullet bullet = new Bullet(timeIndex);
@@ -159,38 +160,52 @@ public class SpaceField implements KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        boolean needRepaint = false;
         switch(e.getKeyCode()) {
             case KeyEvent.VK_UP :
-                System.out.println("up");
+                System.out.println("up held");
                 break;
             case KeyEvent.VK_DOWN :
-                System.out.println("down");
+                System.out.println("down held");
                 break;
             case KeyEvent.VK_LEFT :
-                System.out.println("left");
-                ship.rotate(-15);
-                needRepaint = true;
+                System.out.println("left held");
+                rotationDirection = - 1;
                 break;
             case KeyEvent.VK_RIGHT :
-                System.out.println("right");
-                ship.rotate(15);
-                needRepaint = true;
+                System.out.println("right held");
+                rotationDirection = 1;
                 break;
             case KeyEvent.VK_SPACE :
-                System.out.println("space");
+                System.out.println("space held");
                 generateBullet();
+                SoundPlayer.SoundFX.LAZER.playSound();
                 break;
-        }
-
-        if (needRepaint) {
-            publishTimeEvent();
         }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-
+        switch(e.getKeyCode()) {
+//            case KeyEvent.VK_UP :
+//                System.out.println("up released");
+//                break;
+//            case KeyEvent.VK_DOWN :
+//                System.out.println("down released");
+//                break;
+            case KeyEvent.VK_LEFT :
+                System.out.println("left released");
+                rotationDirection = 0;
+                break;
+            case KeyEvent.VK_RIGHT :
+                System.out.println("right released");
+                rotationDirection = 0;
+                break;
+            case KeyEvent.VK_SPACE :
+//                System.out.println("space released");
+//                generateBullet();
+//                SoundPlayer.SoundFX.LAZER.playSound();
+//                break;
+        }
     }
 
     private static void safeSleep(long time) {
