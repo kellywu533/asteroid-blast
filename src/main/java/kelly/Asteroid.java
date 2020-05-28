@@ -19,6 +19,7 @@ public class Asteroid extends DrawableThing {
 
 
     public Asteroid(int asteroidLevel) {
+        this.asteroidLevel = asteroidLevel;
         setRadius(asteroidLevelRadius[asteroidLevel]);
         setMass(asteroidLevelMass[asteroidLevel]);
     }
@@ -27,14 +28,18 @@ public class Asteroid extends DrawableThing {
         return asteroidLevel;
     }
 
+    private static Color[] colors = new Color[] {
+        Color.CYAN, Color.MAGENTA, Color.PINK, Color.BLUE
+    };
+
     @Override
     protected void drawThing(Graphics2D g2d, int timeIndex) {
-        g2d.setColor(Color.RED);
+        g2d.setColor(colors[asteroidLevel]);
 
         int r = (int) getRadius();
 
         g2d.rotate(timeIndex * Math.PI / 360);
-        g2d.drawRect( -r,  -r, r * 2, r * 2);
+        g2d.fillOval( -r,  -r, r * 2, r * 2);
     }
 
     @Override

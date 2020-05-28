@@ -1,19 +1,23 @@
 package kelly;
 
+import javax.sound.sampled.Clip;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.*;
 
 public class SpaceField implements KeyListener {
-    private static final int LOOP_DELAY = 20;
+    public static final int LOOP_DELAY = 20;
     private static final double minForce = 0.8;
     private static final double maxForce = 2;
     private int timeIndex;
     private int level;
+    private int score;
     private SpaceShip ship;
-    private ArrayList<DrawableThing> movingObjects;
+    private ArrayList<Asteroid> asteroids;
+    private ArrayList<Bullet> bullets;
     private Set<TimeEventListener> timeEventListeners;
+    private Set<GameEventListener> gameEventListeners;
     private int width;
     private int height;
 
@@ -22,44 +26,97 @@ public class SpaceField implements KeyListener {
     private Random random = new Random();
 
     public SpaceField(int width, int height) {
-        timeIndex = 0;
-        level = 1;
-        ship = new SpaceShip();
-        movingObjects = new ArrayList<>();
         timeEventListeners = new HashSet<>();
+        gameEventListeners = new HashSet<>();
         this.width = width;
         this.height = height;
 
-        ship.setPosition(new double[] {300, 240});
+        init();
     }
 
     public void addTimeEventListener(TimeEventListener l) {
         timeEventListeners.add(l);
     }
 
-    public void publishTimeEvent() {
+    public void addGameEventListener(GameEventListener l) {
+        gameEventListeners.add(l);
+    }
+
+    private void publishTimeEvent() {
         for(TimeEventListener l : timeEventListeners) {
             l.onTimeEvent();
         }
     }
 
-    public void startClock() {
+    private void publishGameEvent() {
+        GameEvent e = new GameEvent(ship.getLives(), score, level);
+        for(GameEventListener l : gameEventListeners) {
+            l.onGameEvent(e);
+        }
+    }
+
+    private void init() {
+        timeIndex = 0;
+        level = 1;
+        score = 0;
+        timeForAsteroid = 0;
+        ship = new SpaceShip();
+        asteroids = new ArrayList<>();
+        bullets = new ArrayList<>();
+
+        ship.setPosition(new double[] {300, 240});
+        ship.setLives(3);
+    }
+
+    private Clip startUpClip = null;
+
+    public void runGame() {
         while(true) {
+            if(ship.getLives() > 0) {
+                startUpClip = SoundPlayer.SoundFX.STARTUP.playSound();
+                runGameLoop();
+            } else {
+                runGameOver();
+            }
+        }
+    }
+
+    public void runGameLoop() {
+        publishGameEvent();
+        while(ship.getLives() > 0) {
             timeIndex++;
             updateKeyStatus();
             generateAsteroid();
 
-            moveObjects();
-            // updateShip();
+            moveObjects(asteroids);
+            moveObjects(bullets);
 
-            // checkShipCollision();
-            // checkAsteroidCollision();
-            // checkBulletsHitObjects();
+            if(!ship.checkIncubation(timeIndex) && !ship.checkInvincible(timeIndex)) {
+                checkShipCollision();
+            } else if(ship.timeForSound(timeIndex)) {
+                if (startUpClip == null || !startUpClip.isRunning()) {
+                    startUpClip = SoundPlayer.SoundFX.STARTUP.playSound();
+                }
+            }
 
-            // checkLevelUp();
-            // checkGameOver();
+//            checkAsteroidCollision();
+            checkBulletsHitObjects();
 
             publishTimeEvent();
+            safeSleep(LOOP_DELAY);
+        }
+    }
+
+    private void runGameOver() {
+        publishGameEvent();
+        while(ship.getLives() == 0) {
+            updateKeyStatus();
+
+            moveObjects(asteroids);
+            moveObjects(bullets);
+
+            publishTimeEvent();
+            timeIndex++;
             safeSleep(LOOP_DELAY);
         }
     }
@@ -69,7 +126,78 @@ public class SpaceField implements KeyListener {
         ship.rotate(rotationDirection * 5);
     }
 
-    private void generateBullet() {
+    private void checkShipCollision() {
+        if(timeIndex > ship.getInvincibleTime()) {
+            double[] shipPos = ship.getPosition();
+            int sr = ship.getScale();
+            for(DrawableThing o : asteroids) {
+                double d2 = MatrixUtil.distancedSquare(shipPos, o.getPosition());
+                double r = sr + o.getRadius();
+                if(d2 <= r * r) {
+                    publishGameEvent();
+
+                    ship.changeIncubate(timeIndex);
+                    ship.changeInvincible(timeIndex);
+                    ship.setLives(ship.getLives() - 1);
+                    SoundPlayer.SoundFX.EXPLOSION1.playSound();
+                    return;
+                }
+            }
+        }
+    }
+
+//    private void checkAsteroidCollision() {
+//        for(int i = 0; i < asteroids.size() - 1; i++) {
+//            Asteroid a1 = asteroids.get(i);
+//            for(int j = i + 1; j < asteroids.size(); j++) {
+//                Asteroid a2 = asteroids.get(j);
+//                double d2 = MatrixUtil.distancedSquare(a1.getPosition(), a2.getPosition());
+//                double r = a1.getRadius() + a2.getRadius();
+//                if(d2 < r * r) {
+//
+//                }
+//            }
+//        }
+//    }
+
+    private synchronized void checkBulletsHitObjects() {
+        Set<Bullet> bulletsToBeRemoved = new HashSet<>();
+        Set<Asteroid> asteroidsToBeRemoved = new HashSet<>();
+        Set<Asteroid> asteroidsToBeAdded = new HashSet<>();
+        for(Bullet b : bullets) {
+            for(Asteroid a : asteroids) {
+                double d2 = MatrixUtil.distancedSquare(b.getPosition(), a.getPosition());
+                double r = b.getRadius() + a.getRadius();
+                if(d2 < r * r) {
+                    score += a.getAsteroidLevel() * 10;
+                    publishGameEvent();
+
+                    asteroidsToBeRemoved.add(a);
+                    bulletsToBeRemoved.add(b);
+
+                    int level = a.getAsteroidLevel() - 1;
+                    if(level >= 0) {
+                        for(int i = 0; i < 3; i++) {
+                            Asteroid asteroid = generateAsteroid(
+                                MatrixUtil.cloneArray(a.getPosition())
+                                , generateRandomVector()
+                                , level
+                            );
+                            asteroidsToBeAdded.add(asteroid);
+                        }
+                    }
+                }
+            }
+        }
+        if(!bulletsToBeRemoved.isEmpty()) {
+            SoundPlayer.SoundFX.EXPLOSION2.playSound();
+            asteroids.removeAll(asteroidsToBeRemoved);
+            bullets.removeAll(bulletsToBeRemoved);
+            asteroids.addAll(asteroidsToBeAdded);
+        }
+    }
+
+    private synchronized void generateBullet() {
         double theta = ship.getAngle() * Math.PI / 180;
         double scale = ship.getScale();
         double speedFactor = 0.4;
@@ -77,24 +205,29 @@ public class SpaceField implements KeyListener {
         double y = Math.sin(theta);
         Bullet bullet = new Bullet(timeIndex);
         double[] p = new double[] {x * scale, y * scale};
-        MatrixUtil.addToArray(p, ship.getPosition());
+        MatrixUtil.addTo(p, ship.getPosition());
         bullet.setPosition(p);
         bullet.setVelocity(new double[] {x * scale * speedFactor, y * scale * speedFactor});
-        movingObjects.add(bullet);
+        bullets.add(bullet);
     }
 
-    private void generateAsteroid() {
+    private synchronized void generateAsteroid() {
         if(timeIndex >= timeForAsteroid) {
             double[] position = generateEdgePosition();
-            Asteroid asteroid = new Asteroid(3);
-            asteroid.setPosition(position);
-            asteroid.setVelocity(generateRandomVelocity());
-            movingObjects.add(asteroid);
+            Asteroid asteroid = generateAsteroid(position, generateRandomVector(), 3);
+            asteroids.add(asteroid);
             calculateNextAsteroidDelay();
         }
     }
 
-    private double[] generateRandomVelocity() {
+    private Asteroid generateAsteroid(double[] position, double[] velocity, int level) {
+        Asteroid asteroid = new Asteroid(level);
+        asteroid.setPosition(position);
+        asteroid.setVelocity(velocity);
+        return asteroid;
+    }
+
+    private double[] generateRandomVector() {
         double force = minForce + (random.nextDouble() * (maxForce - minForce));
         double angle = random.nextInt(360) * Math.PI /180;
         return new double[] {force * Math.cos(angle), force * Math.sin(angle)};
@@ -108,19 +241,18 @@ public class SpaceField implements KeyListener {
         return 50 * 8;
     }
 
-    private void moveObjects() {
+    private synchronized void moveObjects(Collection<? extends DrawableThing> collection) {
         HashSet<DrawableThing> toBeRemoved = new HashSet<>();
-        for(DrawableThing m : movingObjects) {
+        for(DrawableThing m : collection) {
             if(m.toBeRemoved(timeIndex)) {
                 toBeRemoved.add(m);
             } else {
                 double[] bounds = new double[] {width, height};
-                double[] force = new double[] {0, 0};
-                m.update(timeIndex, force, bounds);
+                m.update(timeIndex, bounds);
             }
         }
         for(DrawableThing m : toBeRemoved) {
-            movingObjects.remove(m);
+            collection.remove(m);
         }
     }
 
@@ -137,19 +269,32 @@ public class SpaceField implements KeyListener {
         return position;
     }
 
-
-    public int getWidth() {
-        return width;
+    public int getTimeIndex() {
+        return timeIndex;
     }
 
-    public int getHeight() {
-        return height;
-    }
-
-    public void drawField(Graphics2D g2d) {
-        ship.draw(g2d, timeIndex);
-        for(DrawableThing m : movingObjects) {
+    public synchronized void drawField(Graphics2D g2d) {
+        for(DrawableThing m : asteroids) {
             m.draw(g2d, timeIndex);
+        }
+        for(DrawableThing b : bullets) {
+            b.draw(g2d, timeIndex);
+        }
+        if(ship.getLives() <= 0) {
+            if((timeIndex / 50) % 2 == 0) {
+                Font f = g2d.getFont();
+                Font bigger = new Font(f.getName(), Font.BOLD, 32);
+                g2d.setFont(bigger);
+                g2d.setColor(Color.RED);
+                String gameOver = "GAME OVER";
+                FontMetrics fm = g2d.getFontMetrics();
+                int x = (width - fm.stringWidth(gameOver)) / 2;
+                int y = height / 2;
+                g2d.drawString(gameOver, x, y);
+                g2d.setFont(f);
+            }
+        } else {
+            ship.draw(g2d, timeIndex);
         }
     }
 
@@ -162,23 +307,25 @@ public class SpaceField implements KeyListener {
     public void keyPressed(KeyEvent e) {
         switch(e.getKeyCode()) {
             case KeyEvent.VK_UP :
-                System.out.println("up held");
+//                System.out.println("up held");
                 break;
             case KeyEvent.VK_DOWN :
-                System.out.println("down held");
+//                System.out.println("down held");
                 break;
             case KeyEvent.VK_LEFT :
-                System.out.println("left held");
+//                System.out.println("left held");
                 rotationDirection = - 1;
                 break;
             case KeyEvent.VK_RIGHT :
-                System.out.println("right held");
+//                System.out.println("right held");
                 rotationDirection = 1;
                 break;
             case KeyEvent.VK_SPACE :
-                System.out.println("space held");
-                generateBullet();
-                SoundPlayer.SoundFX.LAZER.playSound();
+//                System.out.println("space held");
+                if(!ship.checkIncubation(timeIndex)) {
+                    generateBullet();
+                    SoundPlayer.SoundFX.LAZER.playSound();
+                }
                 break;
         }
     }
@@ -186,25 +333,17 @@ public class SpaceField implements KeyListener {
     @Override
     public void keyReleased(KeyEvent e) {
         switch(e.getKeyCode()) {
-//            case KeyEvent.VK_UP :
-//                System.out.println("up released");
-//                break;
-//            case KeyEvent.VK_DOWN :
-//                System.out.println("down released");
-//                break;
             case KeyEvent.VK_LEFT :
-                System.out.println("left released");
                 rotationDirection = 0;
                 break;
             case KeyEvent.VK_RIGHT :
-                System.out.println("right released");
                 rotationDirection = 0;
                 break;
             case KeyEvent.VK_SPACE :
-//                System.out.println("space released");
-//                generateBullet();
-//                SoundPlayer.SoundFX.LAZER.playSound();
-//                break;
+                break;
+            case KeyEvent.VK_R :
+                init();
+                break;
         }
     }
 

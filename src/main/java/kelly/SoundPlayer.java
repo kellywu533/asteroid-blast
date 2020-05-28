@@ -27,8 +27,8 @@ public class SoundPlayer {
             this.path = path;
         }
 
-        public void playSound() {
-            SoundPlayer.playSoundFromClassPath(path);
+        public Clip playSound() {
+            return SoundPlayer.playSoundFromClassPath(path);
         }
     }
 
@@ -75,15 +75,17 @@ public class SoundPlayer {
         return result;
     }
 
-    public static void playSoundFromClassPath(String path) {
+    public static Clip playSoundFromClassPath(String path) {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(loadFromClassPath(path))) {
-            playSound(bais);
+            return playSound(bais);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return null;
     }
 
-    public static void playSound(InputStream is) {
+    public static Clip playSound(InputStream is) {
         try (AudioInputStream ais = AudioSystem.getAudioInputStream(is)) {
             final Clip clip = AudioSystem.getClip();
             clip.addLineListener((event) -> {
@@ -100,6 +102,7 @@ public class SoundPlayer {
             });
             clip.open(ais);
             clip.start();
+            return clip;
         } catch (UnsupportedAudioFileException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -107,5 +110,7 @@ public class SoundPlayer {
         } catch (LineUnavailableException e) {
             e.printStackTrace();
         }
+
+        return null;
     }
 }

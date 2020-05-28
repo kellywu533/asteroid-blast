@@ -14,6 +14,8 @@ public class GameDisplay extends JComponent implements TimeEventListener {
 
     @Override
     public void paint(Graphics g) {
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, getWidth(), getHeight());
         Graphics2D g2d = (Graphics2D) g;
         field.drawField(g2d);
     }

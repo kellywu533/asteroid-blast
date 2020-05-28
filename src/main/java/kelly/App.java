@@ -6,6 +6,7 @@ import java.awt.event.ActionListener;
 
 public class App
 {
+    private static final boolean TEST_SOUND_FX = false;
     private static final int WIDTH = 600;
     private static final int HEIGHT = 480;
     private SpaceField field;
@@ -28,19 +29,24 @@ public class App
         jf.add(c, BorderLayout.CENTER);
         jf.addKeyListener(field);
 
-//        JPanel jp = new JPanel();
-//        jp.addKeyListener(field);
-//        jf.add(jp, BorderLayout.SOUTH);
-//        for(SoundPlayer.SoundFX sfx : SoundPlayer.SoundFX.values()) {
-//            addButtonTo(jp, sfx.toString(), e -> sfx.playSound());
-//        }
+        jf.add(new GameStatusPanel(field), BorderLayout.NORTH);
+
+        JPanel jp = new JPanel();
+        jf.add(jp, BorderLayout.SOUTH);
+        jp.add(new JLabel("Press 'r' to restart"));
+        if(TEST_SOUND_FX) {
+            jp.addKeyListener(field);
+            for(SoundPlayer.SoundFX sfx : SoundPlayer.SoundFX.values()) {
+                addButtonTo(jp, sfx.toString(), e -> sfx.playSound());
+            }
+        }
 
         jf.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         jf.setResizable(false);
         jf.pack();
         jf.setVisible(true);
 
-        field.startClock();
+        field.runGame();
     }
 
     public static void main( String[] args ) {

@@ -13,7 +13,7 @@ public class Bullet extends DrawableThing {
 
     @Override
     protected void drawThing(Graphics2D g2d, int timeIndex) {
-        g2d.setColor(Color.BLACK);
+        g2d.setColor(Color.YELLOW);
         double[] p = getPosition();
         double[] v = getVelocity();
 

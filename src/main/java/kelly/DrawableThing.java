@@ -7,13 +7,14 @@ import java.util.Arrays;
 public abstract class DrawableThing {
     private double[] position = new double[2];
     private double[] velocity = new double[2];
+    private double[] force;
     protected double radius = 1;
     protected double mass = 1;
     protected double angle = 0;
 
-    public void update(int timeIndex, double[] force, double[] bounds) {
-        for(int i = 0; i < force.length; i++) {
-            double a = force[i] / mass;
+    public void update(int timeIndex, double[] bounds) {
+        for(int i = 0; i < position.length; i++) {
+            double a = force == null ? 0 : force[i] / mass;
             double v = velocity[i] + a;
             double p = position[i] + v;
 
@@ -27,6 +28,7 @@ public abstract class DrawableThing {
 
             velocity[i] = v;
             position[i] = p;
+            force = null;
         }
     }
 
@@ -55,6 +57,18 @@ public abstract class DrawableThing {
 
     public synchronized void setVelocity(double[] velocity) {
         this.velocity = velocity;
+    }
+
+    public double[] getForce() {
+        return force;
+    }
+
+    public void applyForce(double[] force) {
+        if(this.force == null) {
+            this.force = MatrixUtil.cloneArray(force);
+        } else {
+            MatrixUtil.addTo(this.force, force);
+        }
     }
 
     public double getRadius() {
