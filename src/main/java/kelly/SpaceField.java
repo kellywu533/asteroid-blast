@@ -10,12 +10,13 @@ public class SpaceField implements KeyListener {
     public static final int LOOP_DELAY = 20;
     private static final double minForce = 0.8;
     private static final double maxForce = 2;
-    private int timeIndex;
+    private int timeIndex, gameEndTime;
     private int level;
     private int score;
     private SpaceShip ship;
     private ArrayList<Asteroid> asteroids;
     private ArrayList<Bullet> bullets;
+    private ArrayList<Banner> banners;
     private Set<TimeEventListener> timeEventListeners;
     private Set<GameEventListener> gameEventListeners;
     private int width;
@@ -57,12 +58,14 @@ public class SpaceField implements KeyListener {
 
     private void init() {
         timeIndex = 0;
+        gameEndTime = 0;
         level = 1;
         score = 0;
         timeForAsteroid = 0;
         ship = new SpaceShip();
         asteroids = new ArrayList<>();
         bullets = new ArrayList<>();
+        banners = new ArrayList<>();
 
         ship.setPosition(new double[] {300, 240});
         ship.setLives(3);
@@ -85,6 +88,7 @@ public class SpaceField implements KeyListener {
         publishGameEvent();
         while(ship.getLives() > 0) {
             timeIndex++;
+            checkLevelUp();
             updateKeyStatus();
             generateAsteroid();
 
@@ -102,18 +106,22 @@ public class SpaceField implements KeyListener {
 //            checkAsteroidCollision();
             checkBulletsHitObjects();
 
+            checkScore();
+
             publishTimeEvent();
             safeSleep(LOOP_DELAY);
         }
     }
 
     private void runGameOver() {
+        gameEndTime = timeIndex;
         publishGameEvent();
         while(ship.getLives() == 0) {
             updateKeyStatus();
 
             moveObjects(asteroids);
             moveObjects(bullets);
+            moveObjects(banners);
 
             publishTimeEvent();
             timeIndex++;
@@ -124,6 +132,22 @@ public class SpaceField implements KeyListener {
     private int rotationDirection = 0;
     private void updateKeyStatus() {
         ship.rotate(rotationDirection * 5);
+    }
+
+    private void checkLevelUp() {
+        if (timeIndex % 500 == 0) {
+            Banner b = new Banner("Level Up!", 18, timeIndex + 50);
+            b.setPosition(new double[]{20, 20});
+            b.setVelocity(new double[]{ 10, 1});
+            b.setAngle(0);
+            banners.add(b);
+        }
+    }
+
+    private void checkScore() {
+        int l = timeIndex / 250 + 1;
+        level = l < 50 ? l : 50;
+        publishGameEvent();
     }
 
     private void checkShipCollision() {
@@ -238,7 +262,7 @@ public class SpaceField implements KeyListener {
     }
 
     private int levelAsteroidDelay() {
-        return 50 * 8;
+        return 1000 / LOOP_DELAY * 10 / level;
     }
 
     private synchronized void moveObjects(Collection<? extends DrawableThing> collection) {
@@ -273,13 +297,31 @@ public class SpaceField implements KeyListener {
         return timeIndex;
     }
 
+    public int getGameEndTime() {
+        if (gameEndTime > 0) {
+            return gameEndTime;
+        } else {
+            return timeIndex;
+        }
+    }
+
     public synchronized void drawField(Graphics2D g2d) {
-        for(DrawableThing m : asteroids) {
-            m.draw(g2d, timeIndex);
+        for(DrawableThing a : asteroids) {
+            a.draw(g2d, timeIndex);
         }
         for(DrawableThing b : bullets) {
             b.draw(g2d, timeIndex);
         }
+
+        HashSet<Banner> toBeRemoved = new HashSet<>();
+        for(Banner b : banners) {
+            b.draw(g2d, timeIndex);
+            if (b.toBeRemoved(timeIndex)) {
+                toBeRemoved.add(b);
+            }
+        }
+        banners.removeAll(toBeRemoved);
+
         if(ship.getLives() <= 0) {
             if((timeIndex / 50) % 2 == 0) {
                 Font f = g2d.getFont();

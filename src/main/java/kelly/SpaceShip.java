@@ -73,7 +73,7 @@ public class SpaceShip extends DrawableThing {
         if(incubationTime < 0) {
             if(invincibleTime > timeIndex) {
                 if (timeIndex % 50 < 42) {
-                    g2d.setColor(Color.BLUE);
+                    g2d.setColor(Color.YELLOW);
                     g2d.drawOval(-scale * 2, -scale * 2, scale * 4, scale * 4);
                 }
                 g2d.setColor(Color.GRAY);

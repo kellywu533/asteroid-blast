@@ -18,7 +18,7 @@ public class GameStatusPanel extends JPanel {
         add(livesValue);
 
         field.addTimeEventListener(() -> {
-            timeValue.setText(Integer.toString(field.getTimeIndex()));
+            timeValue.setText(Integer.toString(field.getGameEndTime()));
         });
 
         field.addGameEventListener(e -> {
