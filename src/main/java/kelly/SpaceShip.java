@@ -12,7 +12,7 @@ public class SpaceShip extends DrawableThing {
 
     public SpaceShip() {
         incubationTime = -1;
-        invincibleTime = (TIME_SCALE * 4);
+        invincibleTime = (TIME_SCALE * 6);
         angle = 270;
         scale = 8;
     }
@@ -56,16 +56,11 @@ public class SpaceShip extends DrawableThing {
     }
 
     public void changeInvincible(int timeIndex) {
-        invincibleTime = timeIndex + (TIME_SCALE * 6);
+        invincibleTime = timeIndex + (TIME_SCALE * 8);
     }
 
     public boolean timeForSound(int timeIndex) {
         return timeIndex == incubationTime;
-    }
-
-    @Override
-    public void update(int timeIndex, double[] bounds) {
-
     }
 
     @Override

@@ -8,6 +8,9 @@ import java.util.*;
 
 public class SpaceField implements KeyListener {
     public static final int LOOP_DELAY = 20;
+    private static final int TICKS_PER_SECOND = 1000 / LOOP_DELAY;
+    private static final int LEVEL_UP_DELAY = 1000;
+    private static final int BANNER_TICKS = 2 * TICKS_PER_SECOND;
     private static final double minForce = 0.8;
     private static final double maxForce = 2;
     private int timeIndex, gameEndTime;
@@ -72,7 +75,10 @@ public class SpaceField implements KeyListener {
     }
 
     private Clip startUpClip = null;
-
+    private boolean autofireOn = false;
+    private boolean fireOn = false;
+    private boolean turnLeft = false;
+    private boolean turnRight = false;
     public void runGame() {
         while(true) {
             if(ship.getLives() > 0) {
@@ -92,8 +98,15 @@ public class SpaceField implements KeyListener {
             updateKeyStatus();
             generateAsteroid();
 
+            if(!ship.checkIncubation(timeIndex) && (fireOn || autofireOn)) {
+                generateBullet();
+                fireOn = false;
+                SoundPlayer.SoundFX.LAZER.playSound();
+            }
+
             moveObjects(asteroids);
             moveObjects(bullets);
+            moveObjects(banners);
 
             if(!ship.checkIncubation(timeIndex) && !ship.checkInvincible(timeIndex)) {
                 checkShipCollision();
@@ -105,8 +118,6 @@ public class SpaceField implements KeyListener {
 
 //            checkAsteroidCollision();
             checkBulletsHitObjects();
-
-            checkScore();
 
             publishTimeEvent();
             safeSleep(LOOP_DELAY);
@@ -129,25 +140,27 @@ public class SpaceField implements KeyListener {
         }
     }
 
-    private int rotationDirection = 0;
     private void updateKeyStatus() {
-        ship.rotate(rotationDirection * 5);
+        int rotateDirection = turnLeft && turnRight ? 0
+            : turnLeft ? - 1
+            : turnRight ? 1
+            : 0
+            ;
+        ship.rotate(rotateDirection * 5);
     }
 
     private void checkLevelUp() {
-        if (timeIndex % 500 == 0) {
-            Banner b = new Banner("Level Up!", 18, timeIndex + 50);
-            b.setPosition(new double[]{20, 20});
-            b.setVelocity(new double[]{ 10, 1});
+        if (timeIndex % LEVEL_UP_DELAY == 0) {
+            if (level < 50) {
+                level++;
+            }
+            publishGameEvent();
+            Banner b = new Banner("Level " + level + "!", 18, timeIndex + BANNER_TICKS - 4);
+            b.setPosition(new double[]{0, 20});
+            b.setVelocity(new double[]{ (double) width / BANNER_TICKS, 0});
             b.setAngle(0);
             banners.add(b);
         }
-    }
-
-    private void checkScore() {
-        int l = timeIndex / 250 + 1;
-        level = l < 50 ? l : 50;
-        publishGameEvent();
     }
 
     private void checkShipCollision() {
@@ -356,18 +369,15 @@ public class SpaceField implements KeyListener {
                 break;
             case KeyEvent.VK_LEFT :
 //                System.out.println("left held");
-                rotationDirection = - 1;
+                turnLeft = true;
                 break;
             case KeyEvent.VK_RIGHT :
 //                System.out.println("right held");
-                rotationDirection = 1;
+                turnRight = true;
                 break;
             case KeyEvent.VK_SPACE :
 //                System.out.println("space held");
-                if(!ship.checkIncubation(timeIndex)) {
-                    generateBullet();
-                    SoundPlayer.SoundFX.LAZER.playSound();
-                }
+                fireOn = true;
                 break;
         }
     }
@@ -376,12 +386,16 @@ public class SpaceField implements KeyListener {
     public void keyReleased(KeyEvent e) {
         switch(e.getKeyCode()) {
             case KeyEvent.VK_LEFT :
-                rotationDirection = 0;
+                turnLeft = false;
                 break;
             case KeyEvent.VK_RIGHT :
-                rotationDirection = 0;
+                turnRight = false;
                 break;
             case KeyEvent.VK_SPACE :
+                fireOn = false;
+                break;
+            case KeyEvent.VK_A :
+                autofireOn = !autofireOn;
                 break;
             case KeyEvent.VK_R :
                 init();

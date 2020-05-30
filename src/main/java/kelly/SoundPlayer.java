@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 
 public class SoundPlayer {
+    private static final int CONCURRENT_CLIPS = 10;
     private static HashMap<String, byte[]> soundCache = new HashMap<>();
     public enum SoundFX {
         LAZER("/sfx/laser.wav")
@@ -23,12 +24,26 @@ public class SoundPlayer {
         ;
 
         private String path;
+        private Clip[] clips = new Clip[CONCURRENT_CLIPS];
         SoundFX(String path) {
             this.path = path;
         }
 
         public Clip playSound() {
-            return SoundPlayer.playSoundFromClassPath(path);
+            Clip clip = null;
+            for(int i = 0; i < CONCURRENT_CLIPS; i++) {
+                clip = clips[i];
+                if(clip == null) {
+                    clip = SoundPlayer.playSoundFromClassPath(path);
+                    clips[i] = clip;
+                    break;
+                } else if(!clip.isRunning()) {
+                    clip.setFramePosition(0);
+                    clip.start();
+                    break;
+                }
+            }
+            return clip;
         }
     }
 
@@ -88,18 +103,18 @@ public class SoundPlayer {
     public static Clip playSound(InputStream is) {
         try (AudioInputStream ais = AudioSystem.getAudioInputStream(is)) {
             final Clip clip = AudioSystem.getClip();
-            clip.addLineListener((event) -> {
-                LineEvent.Type type = event.getType();
-                if (type == LineEvent.Type.STOP) {
-                    event.getLine().close();
-//                } else if (type == LineEvent.Type.OPEN) {
-//
-//                } else if (type == LineEvent.Type.CLOSE) {
-//
-//                } else if (type == LineEvent.Type.START) {
-//
-                }
-            });
+//            clip.addLineListener((event) -> {
+//                LineEvent.Type type = event.getType();
+//                if (type == LineEvent.Type.STOP) {
+//                    event.getLine().close();
+////                } else if (type == LineEvent.Type.OPEN) {
+////
+////                } else if (type == LineEvent.Type.CLOSE) {
+////
+////                } else if (type == LineEvent.Type.START) {
+////
+//                }
+//            });
             clip.open(ais);
             clip.start();
             return clip;

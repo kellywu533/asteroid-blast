@@ -38,7 +38,6 @@ public class Asteroid extends DrawableThing {
 
         int r = (int) getRadius();
 
-        g2d.rotate(timeIndex * Math.PI / 360);
         g2d.fillOval( -r,  -r, r * 2, r * 2);
     }
 
