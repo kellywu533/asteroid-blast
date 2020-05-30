@@ -2,18 +2,21 @@ package kelly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 
+/**
+ * Lays out the user interface elements.
+ */
 public class App
 {
     private static final int WIDTH = 600;
     private static final int HEIGHT = 480;
-    private SpaceField field;
-    private GameDisplay c;
 
+    /**
+     * Constructs the user interface elements.
+     */
     public App() {
-        field = new SpaceField(WIDTH, HEIGHT);
-        c = new GameDisplay(field);
+        SpaceField field = new SpaceField(WIDTH, HEIGHT);
+        GameDisplay c = new GameDisplay(field);
         Dimension d = new Dimension(WIDTH, HEIGHT);
         c.setPreferredSize(d);
 
@@ -25,7 +28,7 @@ public class App
 
         JPanel jp = new JPanel();
         jf.add(jp, BorderLayout.SOUTH);
-        jp.add(new JLabel("Press 'r' to restart, 'Space' to fire, 'Left/Right Arrows' to rotate"));
+        jp.add(new JLabel("Press 'r' restart; 'Space' fire; 'Left/Right' rotate; 'Down' shield"));
 
         jf.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         jf.setResizable(false);
@@ -36,6 +39,6 @@ public class App
     }
 
     public static void main( String[] args ) {
-        App app = new App();
+        new App();
     }
 }

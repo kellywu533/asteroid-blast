@@ -7,13 +7,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 
+/**
+ * Sound player that plays sounds according to occurrences on the SpaceField.
+ */
 public class SoundPlayer {
     private static final int CONCURRENT_CLIPS = 10;
     private static HashMap<String, byte[]> soundCache = new HashMap<>();
     public enum SoundFX {
         LAZER("/sfx/laser.wav")
         , STARTUP ("/sfx/startup.wav")
-        , UFO ("/sfx/UFO.wav")
         , EXPLOSION1 ("/sfx/explosion1.wav")
         , EXPLOSION2 ("/sfx/explosion2.wav")
         , EXPLOSION3 ("/sfx/explosion3.wav")
@@ -21,6 +23,8 @@ public class SoundPlayer {
         , SWISHBANG ("/sfx/swishbang.wav")
         , QUIET ("/sfx/quiet.wav")
         , SPACENOISE ("/sfx/spacenoise.wav")
+        , SHIELD ("/sfx/threetone2.wav")
+        , SHIELD2 ("/sfx/lowthreetone.wav")
         ;
 
         private String path;
@@ -29,6 +33,10 @@ public class SoundPlayer {
             this.path = path;
         }
 
+        /**
+         * Plays the corresponding sound to each game occurance.
+         * @return
+         */
         public Clip playSound() {
             Clip clip = null;
             for(int i = 0; i < CONCURRENT_CLIPS; i++) {
@@ -44,13 +52,6 @@ public class SoundPlayer {
                 }
             }
             return clip;
-        }
-    }
-
-    public static void main(String[] args) throws InterruptedException {
-        for(SoundFX sfx : SoundFX.values()) {
-            sfx.playSound();
-            Thread.sleep(2000);
         }
     }
 
@@ -90,6 +91,11 @@ public class SoundPlayer {
         return result;
     }
 
+    /**
+     * Plays the specified sound from the given source path.
+     * @param path The source's path.
+     * @return Clip of the audio that is played
+     */
     public static Clip playSoundFromClassPath(String path) {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(loadFromClassPath(path))) {
             return playSound(bais);
@@ -100,6 +106,11 @@ public class SoundPlayer {
         return null;
     }
 
+    /**
+     * Plays a specific sound from the given InputStream.
+     * @param is The InputStream of the audio.
+     * @return Clip of the audio that is played.
+     */
     public static Clip playSound(InputStream is) {
         try (AudioInputStream ais = AudioSystem.getAudioInputStream(is)) {
             final Clip clip = AudioSystem.getClip();
