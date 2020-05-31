@@ -12,8 +12,8 @@ public class Bullet extends DrawableThing {
      * Constructs a Bullet.
      * @param timeIndex The time index of the game.
      */
-    public Bullet(int timeIndex) {
-        expirationTime = timeIndex + 140;
+    public Bullet(int timeIndex, int duration) {
+        expirationTime = timeIndex + duration;
         setMass(1);
         setRadius(2);
     }

@@ -169,7 +169,7 @@ public class SpaceField implements KeyListener {
 
 
 //            checkAsteroidCollision();
-            checkBulletsHitObjects();
+            checkBulletCollision();
 
             publishTimeEvent();
             safeSleep(LOOP_DELAY);
@@ -264,8 +264,9 @@ public class SpaceField implements KeyListener {
                     ship.changeInvincible(timeIndex);
                     ship.setLives(ship.getLives() - 1);
 
-                    resetShip();
+                    generateExplosion();
                     publishGameEvent();
+                    resetShip();
                     SoundPlayer.SoundFX.EXPLOSION1.playSound();
                     return;
                 }
@@ -290,12 +291,15 @@ public class SpaceField implements KeyListener {
     /**
      * Checks whether any Bullets have hit Asteroids and removes the Bullets and Asteroids that have collided.
      */
-    private synchronized void checkBulletsHitObjects() {
+    private synchronized void checkBulletCollision() {
         Set<Bullet> bulletsToBeRemoved = new HashSet<>();
         Set<Asteroid> asteroidsToBeRemoved = new HashSet<>();
         Set<Asteroid> asteroidsToBeAdded = new HashSet<>();
         for(Bullet b : bullets) {
             for(Asteroid a : asteroids) {
+                if(asteroidsToBeRemoved.contains(a)) {
+                    continue;
+                }
                 double d2 = MatrixUtil.distancedSquare(b.getPosition(), a.getPosition());
                 double r = b.getRadius() + a.getRadius();
                 if(d2 < r * r) {
@@ -331,17 +335,33 @@ public class SpaceField implements KeyListener {
      * Generates and shoots a Bullet from the head of the SpaceShip.
      */
     private synchronized void generateBullet() {
-        double theta = ship.getAngle() * Math.PI / 180;
+        int bulletDuration = 140;
+        double speedFactor = 0.4 * ship.getScale();
+        createBullet(ship.getPosition(), ship.getAngle(), speedFactor, bulletDuration);
+    }
+
+    private Bullet createBullet(double[] position, double angle, double speedFactor, int duration) {
+        double theta = angle * Math.PI / 180;
         double scale = ship.getScale();
-        double speedFactor = 0.4;
         double x = Math.cos(theta);
         double y = Math.sin(theta);
-        Bullet bullet = new Bullet(timeIndex);
+        Bullet bullet = new Bullet(timeIndex, duration);
         double[] p = new double[] {x * scale, y * scale};
-        MatrixUtil.addTo(p, ship.getPosition());
+        MatrixUtil.addTo(p, position);
         bullet.setPosition(p);
-        bullet.setVelocity(new double[] {x * scale * speedFactor, y * scale * speedFactor});
+        bullet.setVelocity(new double[] {x * speedFactor, y * speedFactor});
         bullets.add(bullet);
+        return bullet;
+    }
+
+    private void generateExplosion() {
+        int debris = random.nextInt(30) + 30;
+        for(; debris > 0; debris--) {
+            double angle = random.nextDouble() * 360;
+            double speedFactor = (random.nextDouble() * 0.4 + 0.1) * ship.getScale();
+            int duration = random.nextInt(30) + 30;
+            createBullet(ship.getPosition(), angle, speedFactor, duration);
+        }
     }
 
     /**
@@ -391,7 +411,7 @@ public class SpaceField implements KeyListener {
      * Calculates the time index at which the next Asteroid should be deployed.
      */
     private void calculateNextAsteroidDelay() {
-        timeForAsteroid = timeIndex + levelAsteroidDelay() + TICKS_PER_SECOND;
+        timeForAsteroid = timeIndex + levelAsteroidDelay() + TICKS_PER_SECOND / 3;
     }
 
     /**
