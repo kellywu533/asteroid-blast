@@ -34,3 +34,5 @@ java -jar target/asteroid-blast-*-jar-with-dependencies.jar
 Screenshots:
 ------------
 <img src="./docs/imgs/asteroid-blast-demo.gif" width="500" alt="Asteroid Blast Demo" title="Asteroid Blast Demo">
+
+<img src="./docs/imgs/asteroid-blast-explosion-demo.gif" width="500" alt="Asteroid Blast Demo" title="Asteroid Blast Demo">
