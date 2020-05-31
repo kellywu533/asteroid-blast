@@ -399,7 +399,7 @@ public class SpaceField implements KeyListener {
      * @return The time index of when the next Asteroid should be deployed.
      */
     private int levelAsteroidDelay() {
-        return 1000 / LOOP_DELAY * 10 / level;
+        return TICKS_PER_SECOND * 10 / level;
     }
 
     /**
@@ -416,9 +416,7 @@ public class SpaceField implements KeyListener {
                 m.update(bounds, ZEROS, FRICTION);
             }
         }
-        for(DrawableThing m : toBeRemoved) {
-            collection.remove(m);
-        }
+        collection.removeAll(toBeRemoved);
     }
 
     /**
@@ -506,6 +504,7 @@ public class SpaceField implements KeyListener {
     public void keyPressed(KeyEvent e) {
         switch(e.getKeyCode()) {
             case KeyEvent.VK_UP :
+            case KeyEvent.VK_X :
 //                System.out.println("up held");
                 forward = true;
                 break;
@@ -541,9 +540,11 @@ public class SpaceField implements KeyListener {
                 turnRight = false;
                 break;
             case KeyEvent.VK_UP :
+            case KeyEvent.VK_X :
                 forward = false;
                 break;
             case KeyEvent.VK_DOWN :
+            case KeyEvent.VK_C :
                 int shields = ship.getShields();
                 if(shields > 0 && !ship.checkInvincible(timeIndex)) {
                     ship.setShields(shields - 1);
@@ -552,10 +553,12 @@ public class SpaceField implements KeyListener {
                     publishGameEvent();
                     SoundPlayer.SoundFX.SHIELD.playSound();
                 }
+                break;
             case KeyEvent.VK_SPACE :
                 fireOn = false;
                 break;
             case KeyEvent.VK_A :
+            case KeyEvent.VK_Z :
                 autofireOn = !autofireOn;
                 break;
             case KeyEvent.VK_R :
