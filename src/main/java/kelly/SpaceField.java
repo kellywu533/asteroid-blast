@@ -1,5 +1,8 @@
 package kelly;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javax.sound.sampled.Clip;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -10,6 +13,8 @@ import java.util.*;
  * The SpaceField in which the Asteroid Blast game is played.
  */
 public class SpaceField implements KeyListener {
+    private static final Logger logger = LogManager.getLogger(SpaceField.class);
+
     public static final int LOOP_DELAY = 20;
     private static final int TICKS_PER_SECOND = 1000 / LOOP_DELAY;
     private static final int LEVEL_UP_DELAY = 1000;
@@ -525,22 +530,22 @@ public class SpaceField implements KeyListener {
         switch(e.getKeyCode()) {
             case KeyEvent.VK_UP :
             case KeyEvent.VK_X :
-//                System.out.println("up held");
+                logger.debug("up held [{}]  [{}]", e.getKeyCode(), e);
                 forward = true;
                 break;
             case KeyEvent.VK_DOWN :
-//                System.out.println("down held");
+                logger.debug("down held [{}]  [{}]", e.getKeyCode(), e);
                 break;
             case KeyEvent.VK_LEFT :
-//                System.out.println("left held");
+                logger.debug("left held [{}]  [{}]", e.getKeyCode(), e);
                 turnLeft = true;
                 break;
             case KeyEvent.VK_RIGHT :
-//                System.out.println("right held");
+                logger.debug("right held [{}]  [{}]", e.getKeyCode(), e);
                 turnRight = true;
                 break;
             case KeyEvent.VK_SPACE :
-//                System.out.println("space held");
+                logger.debug("space held [{}]  [{}]", e.getKeyCode(), e);
                 fireOn = true;
                 break;
         }
